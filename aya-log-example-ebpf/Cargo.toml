@@ -1,0 +1,21 @@
+[package]
+name = "aya-log-example-ebpf"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+aya-bpf = { git = "http://github.com/aya-rs/aya", branch = "main" }
+aya-log-common = { git = "https://github.com/vadorovsky/aya-log", branch = "fmt-userspace" }
+aya-log-ebpf = { git = "https://github.com/vadorovsky/aya-log", branch = "fmt-userspace" }
+aya-log-ebpf-macros = { git = "https://github.com/vadorovsky/aya-log", branch = "fmt-userspace" }
+aya-log-example-common = { path = "../aya-log-example-common" }
+
+[[bin]]
+name = "aya-log-example"
+path = "src/main.rs"
+
+[profile.release]
+panic = "abort"
+
+[workspace]
+members = []
