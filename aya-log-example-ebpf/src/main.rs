@@ -2,11 +2,9 @@
 #![no_main]
 
 use aya_bpf::{
-    helpers::{bpf_get_current_comm, bpf_get_current_pid_tgid},
-    macros::btf_tracepoint,
-    programs::BtfTracePointContext,
+    helpers::bpf_probe_read_str, macros::btf_tracepoint, programs::BtfTracePointContext,
 };
-use aya_log_ebpf::{debug, error, info, trace, warn};
+use aya_log_ebpf::debug;
 
 #[allow(non_upper_case_globals)]
 #[allow(non_snake_case)]
@@ -27,92 +25,12 @@ unsafe fn try_sched_process_fork(ctx: BtfTracePointContext) -> Result<u32, u32> 
     let _parent: *const task_struct = ctx.arg(0);
     let child: *const task_struct = ctx.arg(1);
 
-    debug!(&ctx, "some arguments: {}, {}, {}, {}", -1, 1, 3.14, "str");
+    let mut buf = [0u8; 16];
+    let len = bpf_probe_read_str((&(*child).comm).as_ptr() as *const u8, &mut buf)
+        .map_err(|e| e as u32)?;
+    let comm = core::str::from_utf8_unchecked(&buf[..len]);
 
-    let pid = bpf_get_current_pid_tgid() as u32;
-
-    let comm_i8 = &bpf_get_current_comm().map_err(|e| e as u32)?[..];
-    let comm_u8 = &*(comm_i8 as *const _ as *const [u8]);
-    let comm = core::str::from_utf8_unchecked(comm_u8);
-
-    let cpid = (*child).pid as u32;
-    let ccomm_i8 = &(*child).comm[..];
-    let ccomm_u8 = &*(ccomm_i8 as *const _ as *const [u8]);
-    let ccomm = core::str::from_utf8_unchecked(ccomm_u8);
-
-    debug!(
-        &ctx,
-        target: "foo",
-        "process forked, pid: {}, comm: {}, new pid: {}, new comm: {}",
-        pid,
-        comm,
-        cpid,
-        ccomm
-    );
-    debug!(
-        &ctx,
-        "process forked, pid: {}, comm: {}, new pid: {}, new comm: {}", pid, comm, cpid, ccomm
-    );
-
-    error!(
-        &ctx,
-        target: "foo",
-        "process forked, pid: {}, comm: {}, new pid: {}, new comm: {}",
-        pid,
-        comm,
-        cpid,
-        ccomm
-    );
-    error!(
-        &ctx,
-        "process forked, pid: {}, comm: {}, new pid: {}, new comm: {}", pid, comm, cpid, ccomm
-    );
-
-    info!(
-        &ctx,
-        target: "foo",
-        "process forked, pid: {}, comm: {}, new pid: {}, new comm: {}",
-        pid,
-        comm,
-        cpid,
-        ccomm
-    );
-    info!(
-        &ctx,
-        "process forked, pid: {}, comm: {}, new pid: {}, new comm: {}", pid, comm, cpid, ccomm
-    );
-
-    trace!(
-        &ctx,
-        target: "foo",
-        "process forked, pid: {}, comm: {}, new pid: {}, new comm: {}",
-        pid,
-        comm,
-        cpid,
-        ccomm
-    );
-    trace!(
-        &ctx,
-        "process forked, pid: {}, comm: {}, new pid: {}, new comm: {}",
-        pid,
-        comm,
-        cpid,
-        ccomm
-    );
-
-    warn!(
-        &ctx,
-        target: "foo",
-        "process forked, pid: {}, comm: {}, new pid: {}, new comm: {}",
-        pid,
-        comm,
-        cpid,
-        ccomm
-    );
-    warn!(
-        &ctx,
-        "process forked, pid: {}, comm: {}, new pid: {}, new comm: {}", pid, comm, cpid, ccomm
-    );
+    debug!(&ctx, "len: {}, comm: {}", len, comm);
 
     Ok(0)
 }
