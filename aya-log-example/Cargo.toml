@@ -6,7 +6,7 @@ publish = false
 
 [dependencies]
 aya = { git = "https://github.com/aya-rs/aya", branch="main" }
-aya-log = { git = "https://github.com/vadorovsky/aya-log", branch = "fmt-userspace" }
+aya-log = { git = "https://github.com/aya-rs/aya-log", branch = "main" }
 aya-log-example-common = { path = "../aya-log-example-common", features=["user"] }
 anyhow = "1.0.42"
 ctrlc = "3.2"
